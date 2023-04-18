@@ -1,5 +1,6 @@
 import { useRef, useEffect } from "react";
 import { useQuery } from "react-query";
+import { Input } from "antd";
 
 type _googleFieldTypes = "name" | "vicinity" | "website"; // not full list, see https://developers.google.com/maps/documentation/javascript/reference/places-service#PlaceResult
 type _googlePlaceResult = Record<_googleFieldTypes, string>;
@@ -18,10 +19,22 @@ let _googlePlacesService: {
     ) => void;
 };
 
+const PlacesAPIAttributes = ["name", "vicinity", "website"] as const;
+
+interface PlaceAutocompleteResult
+    extends Record<typeof PlacesAPIAttributes[number], any> {
+    name: string;
+    vicinity: string; // this is the short address, just street number and name
+    website: string; // this is the url that google thinks is the places
+}
+
 class _googlePlacesAutoCompleteType {
     constructor(input: HTMLInputElement, options: any) {}
     addListener(eventName: string, cb: () => void) {}
-    getPlace() {}
+    getPlace(): PlaceAutocompleteResult {
+        // this is just going to get overridden
+        return {} as PlaceAutocompleteResult;
+    }
 }
 let _googlePlacesAutoComplete: typeof _googlePlacesAutoCompleteType;
 
@@ -37,7 +50,11 @@ export async function initMap(): Promise<void> {
     _googlePlacesAutoComplete = Autocomplete;
 }
 
-export const MapsAutoComplete = () => {
+export const MapsAutoComplete = ({
+    onSelect,
+}: {
+    onSelect: (place: PlaceAutocompleteResult) => void;
+}) => {
     const NYC = { lat: 40.7128, lng: -74.006 };
     const defaultBounds = {
         north: NYC.lat + 0.1,
@@ -49,7 +66,7 @@ export const MapsAutoComplete = () => {
     const options = {
         bounds: defaultBounds,
         componentRestrictions: { country: "us" },
-        fields: ["name", "vicinity", "website"],
+        fields: PlacesAPIAttributes,
         strictBounds: true,
         types: ["restaurant"],
     };
@@ -61,13 +78,23 @@ export const MapsAutoComplete = () => {
             );
             autoComplete.addListener("place_changed", () => {
                 const place = autoComplete.getPlace();
-                console.log(place);
+                onSelect(place);
             });
         }
     }, []);
 
     return (
-        <input type="text" placeholder="Search Restaurants" ref={inputRef} />
+        <input
+            type="text"
+            placeholder="Search Restaurants..."
+            ref={inputRef}
+            style={{
+                width: "500px",
+                height: "32px",
+                fontSize: "20px",
+                padding: "5px",
+            }}
+        />
     );
 };
 

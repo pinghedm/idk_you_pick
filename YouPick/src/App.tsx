@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "./App.css";
 
-import { Spin, Layout, Menu } from "antd";
+import { Spin, Layout, Menu, Button } from "antd";
 import { initMap } from "services/map_service";
 import { QueryClient, QueryClientProvider } from "react-query";
 import {
@@ -9,47 +9,60 @@ import {
   Route,
   Routes,
   useLocation,
-  Link,
   Navigate,
+  useNavigate,
 } from "react-router-dom";
 import Places from "pages/Places/Places.lazy";
 
 type MenuOption = "places" | "pick" | "friends" | "logout";
 const Header = () => {
   const location = useLocation();
+  const navigate = useNavigate();
 
-  const [currentMenuSelection, setCurrentMenuSelection] = useState<MenuOption>(
+  const [currentMenuSelection, _] = useState<MenuOption>(
     (location.pathname.split("/")[1] || "places") as MenuOption
   );
   return (
     <Layout.Header>
-      <Menu
-        theme="dark"
-        mode="horizontal"
-        defaultSelectedKeys={[currentMenuSelection]}
-        onClick={(e) => {
-          setCurrentMenuSelection(e.key as MenuOption);
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
         }}
       >
-        <Menu.Item key="places">
-          <Link to="places">Places</Link>
-        </Menu.Item>
-        <Menu.Item key="pick">
-          <Link to="pick">Do Something Tonight</Link>
-        </Menu.Item>
-        <Menu.Item key="friends">
-          <Link to="friends">Friends</Link>
-        </Menu.Item>
-        <Menu.Item
-          key="logout"
-          style={{ marginLeft: "auto" }}
+        <Menu
+          style={{ flex: 1 }}
+          theme="dark"
+          mode="horizontal"
+          defaultSelectedKeys={[currentMenuSelection]}
+          onClick={(e) => {
+            navigate({ pathname: e.key });
+          }}
+          items={[
+            {
+              key: "places",
+              label: "Places",
+            },
+            {
+              key: "pick",
+              label: "Do Something Tonight",
+            },
+            {
+              key: "friends",
+              label: "Friends",
+            },
+          ]}
+        ></Menu>
+        <Button
           onClick={() => {
             console.log("logout");
           }}
         >
           Logout
-        </Menu.Item>
-      </Menu>
+        </Button>
+      </div>
     </Layout.Header>
   );
 };
