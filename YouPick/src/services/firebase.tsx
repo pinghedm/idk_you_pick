@@ -9,7 +9,7 @@ import {
 } from 'firebase/auth'
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore'
 
-const databaseUrl = process.env.REACT_APP_FIRESTORE_URL || ''
+const databaseUrl = import.meta.env.VITE_FIRESTORE_URL || ''
 const firebaseConfig = {
     apiKey: 'AIzaSyCfsbLCkQdYMTlpgpLd9WRnbw0YXQx4Icw',
     authDomain: 'idkyoupick.firebaseapp.com',
@@ -21,7 +21,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig)
 export const auth = getAuth()
-const emulatorAuthDomain = process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || ''
+const emulatorAuthDomain = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || ''
 if (emulatorAuthDomain.includes('localhost')) {
     connectAuthEmulator(auth, emulatorAuthDomain)
 }
