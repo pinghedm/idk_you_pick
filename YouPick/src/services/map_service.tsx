@@ -55,7 +55,6 @@ export const queryLocationByName = (query: string, cb?: _googlePlacesServiceCall
     _googlePlacesService.findPlaceFromQuery(
         { query, fields: ['name', 'vicinity', 'website'] },
         (res, status) => {
-            console.log(res, status)
             cb ? cb(res, status) : () => {}
         },
     )
@@ -65,7 +64,6 @@ export const useQueryLocationByName = (query: string) => {
     const rqQuery = useQuery(['locationByName', query], () => {
         const results = new Promise((promiseRes, rej) => {
             queryLocationByName(query, (res, status) => {
-                console.log(res, status)
                 if (status === _googlePlacesServiceStatus.OK) {
                     return promiseRes(res)
                 } else {
