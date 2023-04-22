@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import './App.css'
 
 import { Spin, Layout, Menu, Button } from 'antd'
-import { initMap } from 'services/map_service'
+// import { initMap } from 'services/map_service'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import {
     BrowserRouter as Router,
@@ -98,11 +98,7 @@ const App = () => {
     })
     const [mapLoaded, setMapLoaded] = useState(false)
     useEffect(() => {
-        async function _init() {
-            await initMap()
-            setMapLoaded(true)
-        }
-        _init()
+        setMapLoaded(!!window._googlePlacesAutoComplete)
     }, [])
     if (mapLoaded) {
         return (

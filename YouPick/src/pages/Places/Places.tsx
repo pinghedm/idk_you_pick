@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { PlaceAutocompleteResult, useAutocompleteSuggestions } from 'services/map_service'
-import { Input, Card, Button, Switch } from 'antd'
+import {
+    PlaceAutocompleteResult,
+    useAutocompleteSuggestions,
+    usePlaceDetails,
+} from 'services/map_service'
+import { Input, Card, Button, Switch, AutoComplete } from 'antd'
 import { ExportOutlined, StarFilled, StarOutlined, DeleteOutlined } from '@ant-design/icons'
 import {
     usePlaces,
@@ -22,7 +26,7 @@ const TEMP_PLACE: PlaceAutocompleteResult = {
     url: 'https://maps.google.com/?cid=9804386210370628699',
 }
 
-const TEMP_PLACES = Array(5)
+const TEMP_PLACES: PlaceAutocompleteResult[] = Array(1)
     .fill(TEMP_PLACE)
     .map((p, idx) => ({ ...p, place_id: idx }))
 
@@ -232,12 +236,8 @@ const Places = ({}: PlacesProps) => {
     const createPlaceMutation = useCreatePlace()
     const useCreateUserPlaceInfoMutation = useCreateUserPlaceInfo()
 
-    const [selectedPlace, setSelectedPlace] = useState<PlaceAutocompleteResult | undefined>(
-        undefined,
-    )
-    useEffect(() => {
-        setSelectedPlace(TEMP_PLACE)
-    }, [])
+    const [selectedPlaceID, setSelectedPlaceID] = useState<string | undefined>(undefined)
+    const { data: newPlaceDetails } = usePlaceDetails(selectedPlaceID ?? '')
 
     const [placeSearchQuery, setPlaceSearchQuery] = useState('')
     const debouncedPlaceSearchQuery = useDebounce(placeSearchQuery, 200)
@@ -245,18 +245,27 @@ const Places = ({}: PlacesProps) => {
     const places = useMemo(
         () =>
             (_places ?? []).filter(p =>
-                p.name.toLowerCase().includes(debouncedPlaceSearchQuery.toLowerCase().trim()),
+                p.name
+                    .toLowerCase()
+                    .includes(debouncedPlaceSearchQuery?.toLowerCase()?.trim() ?? ''),
             ),
         [_places, debouncedPlaceSearchQuery],
     )
-    const { data: locationQueryResults, status } = useAutocompleteSuggestions(
+    const { data: _autoCompleteSuggestions } = useAutocompleteSuggestions(
         debouncedPlaceSearchQuery,
         debouncedPlaceSearchQuery.length > 0 && places.length === 0,
     )
-    console.log(status)
-    if (locationQueryResults) {
-        console.log(locationQueryResults)
-    }
+    const autoCompleteSuggestions = useMemo(() => {
+        if (debouncedPlaceSearchQuery.length > 0 && places.length === 0) {
+            return _autoCompleteSuggestions?.predictions?.map(s => ({
+                label: s.description,
+                value: s.place_id,
+                key: s.place_id,
+            }))
+        }
+        return []
+    }, [_autoCompleteSuggestions, places, debouncedPlaceSearchQuery])
+
     return (
         <div
             style={{
@@ -288,21 +297,40 @@ const Places = ({}: PlacesProps) => {
                 ))}
             </div>
             <div style={{ width: '49%', height: '500px', position: 'sticky', top: '80px' }}>
-                <Input
+                <AutoComplete
+                    autoFocus
                     placeholder="Search..."
                     allowClear
-                    onChange={e => {
-                        setPlaceSearchQuery(e.target.value)
+                    onChange={q => {
+                        setPlaceSearchQuery(q)
                     }}
                     style={{
                         width: '100%',
                         height: '32px',
                         fontSize: '20px',
                         padding: '5px',
+                        marginBottom: '15px',
                     }}
-                />
-                {selectedPlace ? (
-                    <PlaceCard place={selectedPlace} userPlaceInfo={null} showSave />
+                    value={placeSearchQuery}
+                    onSelect={placeID => {
+                        if (places.length) {
+                            return
+                        }
+                        setSelectedPlaceID(placeID)
+                    }}
+                >
+                    {(autoCompleteSuggestions ?? []).map(opt => (
+                        <AutoComplete.Option key={opt.key} value={opt.value}>
+                            {opt.label}
+                        </AutoComplete.Option>
+                    ))}
+                </AutoComplete>
+                {newPlaceDetails ? (
+                    <PlaceCard
+                        place={newPlaceDetails as PlaceAutocompleteResult}
+                        userPlaceInfo={null}
+                        showSave
+                    />
                 ) : null}
             </div>
         </div>
