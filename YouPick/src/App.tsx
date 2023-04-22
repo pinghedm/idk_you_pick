@@ -26,7 +26,7 @@ const Header = () => {
         (location.pathname.split('/')[1] || 'places') as MenuOption,
     )
     return (
-        <Layout.Header>
+        <Layout.Header style={{ position: 'sticky', top: 0, zIndex: 1, width: '100%' }}>
             <div
                 style={{
                     display: 'flex',
@@ -79,15 +79,9 @@ const ActualApp = () => {
     }
 
     return (
-        <Layout
-            className="layout"
-            style={{
-                width: '100vw',
-                height: '100vh',
-            }}
-        >
+        <Layout style={{ width: '99vw' }}>
             <Header />
-            <Layout.Content style={{ padding: '25px' }}>
+            <Layout.Content>
                 <Routes>
                     <Route path="/" element={<Navigate to={{ pathname: 'places' }} />} />
                     <Route path="/places" element={<Places />} />

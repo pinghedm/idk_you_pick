@@ -16,6 +16,8 @@ export interface UserPlaceInfo {
     user_id: string
     place_id: string
     desire: number | null
+    rating: number | null
+    hard_no: boolean
 }
 
 export const usePlaces = () => {

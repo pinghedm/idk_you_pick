@@ -11,12 +11,12 @@ import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore'
 
 const databaseUrl = import.meta.env.VITE_FIRESTORE_URL || ''
 const firebaseConfig = {
-    apiKey: 'AIzaSyCfsbLCkQdYMTlpgpLd9WRnbw0YXQx4Icw',
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
     authDomain: 'idkyoupick.firebaseapp.com',
     projectId: 'idkyoupick',
     storageBucket: 'idkyoupick.appspot.com',
     messagingSenderId: '480932222539',
-    appId: '1:480932222539:web:9d5d004090bb98b5d45fce',
+    appId: '1:480932222539:web:50a9fbddf62f33ddd45fce',
 }
 
 const app = initializeApp(firebaseConfig)
