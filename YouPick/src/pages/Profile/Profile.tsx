@@ -8,12 +8,12 @@ const Profile = ({}: ProfileProps) => {
     const { data: currentUser, status } = useCurrentUserDetails()
     const updateUserMutation = useUpdateCurrentUser()
 
-    const [newName, setNewName] = useState<string | undefined>(undefined)
-    if (status === 'loading') {
+    const [newName, setNewName] = useState<string | undefined>(currentUser?.name)
+    if (status !== 'success') {
         return <Spin />
     }
     return (
-        <div>
+        <div style={{ width: '100%', height: '100%', padding: '15px' }}>
             <div
                 style={{
                     display: 'flex',
@@ -28,7 +28,7 @@ const Profile = ({}: ProfileProps) => {
                     onChange={e => {
                         setNewName(e.target.value)
                     }}
-                    defaultValue={currentUser?.name}
+                    value={newName}
                     onPressEnter={e => {
                         if (newName && newName !== currentUser?.name) {
                             updateUserMutation.mutate({ name: newName.trim() })
@@ -38,11 +38,11 @@ const Profile = ({}: ProfileProps) => {
                 <Button
                     icon={<CheckOutlined />}
                     onClick={() => {
-                        if (newName !== undefined) {
+                        if (newName && newName !== currentUser?.name) {
                             updateUserMutation.mutate({ name: newName.trim() })
                         }
                     }}
-                    disabled={newName === currentUser?.name}
+                    disabled={!newName || newName === currentUser?.name}
                 />
             </div>
         </div>

@@ -13,32 +13,25 @@ import {
     useCreateUserPlaceInfo,
     useCreatePlace,
     UserPlaceInfo,
+    useUpdateUserPlaceInfo,
 } from 'services/place_service'
 import useDebounce from 'hooks/useDebounce'
-import MapsAutoComplete from 'components/MapsAutoComplete/MapsAutoComplete.lazy'
 export interface PlacesProps {}
-
-const TEMP_PLACE: PlaceAutocompleteResult = {
-    name: 'Xochitl Taqueria',
-    vicinity: '1015 Fulton Street, Brooklyn',
-    website: 'https://xochitlnyc.com/',
-    place_id: 'ChIJA3VMyaJbwokRWyzh_U8tEIg',
-    url: 'https://maps.google.com/?cid=9804386210370628699',
-}
-
-const TEMP_PLACES: PlaceAutocompleteResult[] = Array(1)
-    .fill(TEMP_PLACE)
-    .map((p, idx) => ({ ...p, place_id: idx }))
 
 const PlaceCard = ({
     place,
     userPlaceInfo,
     showSave,
+    clearSearch,
 }: {
     place: Place
     userPlaceInfo: UserPlaceInfo | null
     showSave: boolean
+    clearSearch?: () => void
 }) => {
+    const createPlaceMutation = useCreatePlace()
+    const useCreateUserPlaceInfoMutation = useCreateUserPlaceInfo()
+    const updateUserPlaceInfoMutation = useUpdateUserPlaceInfo()
     const [newPlaceInfo, setNewPlaceInfo] = useState<Omit<UserPlaceInfo, 'user_id' | 'place_id'>>({
         desire: null,
         rating: null,
@@ -81,10 +74,13 @@ const PlaceCard = ({
                     <HardNo
                         hardNo={showSave ? newPlaceInfo.hard_no : userPlaceInfo?.hard_no ?? false}
                         onChange={hardNo => {
-                            if (showSave) {
-                                setNewPlaceInfo(pi => ({ ...pi, hard_no: hardNo }))
-                            } else {
-                                console.log(hardNo)
+                            const newPlaceInfo_ = { ...newPlaceInfo, hard_no: hardNo }
+                            setNewPlaceInfo(newPlaceInfo_)
+                            if (!showSave) {
+                                updateUserPlaceInfoMutation.mutate({
+                                    ...newPlaceInfo_,
+                                    place_id: place.place_id,
+                                })
                             }
                         }}
                     />
@@ -102,10 +98,13 @@ const PlaceCard = ({
                                 showSave ? newPlaceInfo.desire : userPlaceInfo?.desire ?? null
                             }
                             onSelect={newDesire => {
-                                if (showSave) {
-                                    setNewPlaceInfo(pi => ({ ...pi, desire: newDesire }))
-                                } else {
-                                    console.log(newDesire)
+                                const newPlaceInfo_ = { ...newPlaceInfo, desire: newDesire }
+                                setNewPlaceInfo(newPlaceInfo_)
+                                if (!showSave) {
+                                    updateUserPlaceInfoMutation.mutate({
+                                        ...newPlaceInfo_,
+                                        place_id: place.place_id,
+                                    })
                                 }
                             }}
                         />
@@ -115,10 +114,13 @@ const PlaceCard = ({
                                 showSave ? newPlaceInfo.rating : userPlaceInfo?.rating ?? null
                             }
                             onSelect={newRating => {
-                                if (showSave) {
-                                    setNewPlaceInfo(pi => ({ ...pi, rating: newRating }))
-                                } else {
-                                    console.log(newRating)
+                                const newPlaceInfo_ = { ...newPlaceInfo, rating: newRating }
+                                setNewPlaceInfo(newPlaceInfo_)
+                                if (!showSave) {
+                                    updateUserPlaceInfoMutation.mutate({
+                                        ...newPlaceInfo_,
+                                        place_id: place.place_id,
+                                    })
                                 }
                             }}
                         />
@@ -127,10 +129,13 @@ const PlaceCard = ({
                                 showSave ? newPlaceInfo.hard_no : userPlaceInfo?.hard_no ?? false
                             }
                             onChange={hardNo => {
-                                if (showSave) {
-                                    setNewPlaceInfo(pi => ({ ...pi, hard_no: hardNo }))
-                                } else {
-                                    console.log(hardNo)
+                                const newPlaceInfo_ = { ...newPlaceInfo, hard_no: hardNo }
+                                setNewPlaceInfo(newPlaceInfo_)
+                                if (!showSave) {
+                                    updateUserPlaceInfoMutation.mutate({
+                                        ...newPlaceInfo_,
+                                        place_id: place.place_id,
+                                    })
                                 }
                             }}
                         />
@@ -142,7 +147,21 @@ const PlaceCard = ({
                     <Button
                         type="primary"
                         onClick={() => {
-                            console.log('save')
+                            createPlaceMutation.mutate(place, {
+                                onSuccess: () => {
+                                    useCreateUserPlaceInfoMutation.mutate(
+                                        {
+                                            ...newPlaceInfo,
+                                            place_id: place.place_id,
+                                        } as Omit<UserPlaceInfo, 'user_id'>,
+                                        {
+                                            onSettled: () => {
+                                                ;(clearSearch ?? (() => {}))()
+                                            },
+                                        },
+                                    )
+                                },
+                            })
                         }}
                     >
                         Save
@@ -221,8 +240,7 @@ const Rating = ({
 }
 
 const Places = ({}: PlacesProps) => {
-    // const { data: _places } = usePlaces()
-    const _places = TEMP_PLACES
+    const { data: _places } = usePlaces()
     const { data: userPlaceInfos } = useUserPlaceInfos()
     const userPlaceInfoByPlaceId = useMemo(
         () =>
@@ -232,9 +250,6 @@ const Places = ({}: PlacesProps) => {
             ),
         [userPlaceInfos],
     )
-
-    const createPlaceMutation = useCreatePlace()
-    const useCreateUserPlaceInfoMutation = useCreateUserPlaceInfo()
 
     const [selectedPlaceID, setSelectedPlaceID] = useState<string | undefined>(undefined)
     const { data: newPlaceDetails } = usePlaceDetails(selectedPlaceID ?? '')
@@ -330,6 +345,9 @@ const Places = ({}: PlacesProps) => {
                         place={newPlaceDetails as PlaceAutocompleteResult}
                         userPlaceInfo={null}
                         showSave
+                        clearSearch={() => {
+                            setPlaceSearchQuery('')
+                        }}
                     />
                 ) : null}
             </div>

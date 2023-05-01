@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from 'react-query'
-import { db, auth } from 'services/firebase'
+import { db, useCurrentUser } from 'services/firebase'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 
 export interface User {
@@ -8,23 +8,24 @@ export interface User {
 }
 
 export const useCurrentUserDetails = () => {
+    const authUser = useCurrentUser()
+
     const _get = async () => {
-        const user = auth.currentUser
-        if (user === null) {
+        if (!authUser) {
             return null
         }
-        const ref = doc(db, 'users/' + user.uid)
+        const ref = doc(db, 'users/' + authUser.uid)
         const userDetailsLazy = await getDoc(ref)
         const userDetails = userDetailsLazy.data() as User
         return userDetails
     }
-    const query = useQuery(['user', 'self'], _get)
+    const query = useQuery(['user', 'self'], _get, { enabled: !!authUser })
     return query
 }
 
 export const useUpdateCurrentUser = () => {
+    const authUser = useCurrentUser()
     const _post = async (userPatch: Partial<User>) => {
-        const authUser = auth.currentUser
         if (!authUser) {
             return null
         }

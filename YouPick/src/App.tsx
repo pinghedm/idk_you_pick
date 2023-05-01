@@ -16,6 +16,7 @@ import Places from 'pages/Places/Places.lazy'
 import Profile from 'pages/Profile/Profile.lazy'
 import Login from 'pages/Login/Login.lazy'
 import { useCurrentUser, logout } from 'services/firebase'
+import { useCurrentUserDetails } from 'services/user_service'
 
 type MenuOption = 'places' | 'pick' | 'friends' | 'profile' | 'logout'
 const Header = () => {
@@ -73,8 +74,8 @@ const Header = () => {
 }
 
 const ActualApp = () => {
-    const user = useCurrentUser()
-    if (user === null) {
+    const authUser = useCurrentUser()
+    if (authUser === null) {
         return <Login />
     }
 

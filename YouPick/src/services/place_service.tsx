@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from 'react-query'
-import { db, auth } from 'services/firebase'
+import { db, useCurrentUser } from 'services/firebase'
 import {
     doc,
     getDoc,
@@ -53,9 +53,9 @@ export const useCreatePlace = () => {
 }
 
 export const useUserPlaceInfos = () => {
-    const authUser = auth.currentUser
+    const authUser = useCurrentUser()
     const _get = async () => {
-        if (authUser === null) {
+        if (!authUser) {
             throw Error('Not Logged In')
         }
         const ref = collection(db, `users/${authUser.uid}/places`)
@@ -65,28 +65,66 @@ export const useUserPlaceInfos = () => {
         queryResult.forEach(d => userPlaceInfos.push(d.data() as UserPlaceInfo))
         return userPlaceInfos
     }
-    const query = useQuery(['userPlaces', authUser?.uid], _get)
+    const query = useQuery(['userPlaces', authUser?.uid], _get, { enabled: !!authUser })
     return query
 }
 
-export const useCreateUserPlaceInfo = () => {
-    const authUser = auth.currentUser
-    const _post = async (place_id: string) => {
+export const useUpdateUserPlaceInfo = () => {
+    const authUser = useCurrentUser()
+    const _post = async (updatedUserPlaceInfo: Omit<UserPlaceInfo, 'user_id'>) => {
         if (!authUser) {
             throw Error('Not Logged In')
         }
-        const ref = doc(db, `users/${authUser.uid}/places/${place_id}`)
-        await setDoc(ref, { desire: null })
-        return { user_id: authUser.uid, place_id, desire: null } as UserPlaceInfo
+        const ref = doc(db, `users/${authUser.uid}/places/${updatedUserPlaceInfo.place_id}`)
+        const updatedUserPlaceInfo_ = { ...updatedUserPlaceInfo, user_id: authUser.uid }
+        await setDoc(ref, updatedUserPlaceInfo_)
+        return updatedUserPlaceInfo_
     }
     const queryClient = useQueryClient()
-    const mutation = useMutation((place_id: string) => _post(place_id), {
-        onMutate: async () => {
-            await queryClient.cancelQueries(['userPlaces', authUser?.uid])
+    const mutation = useMutation(
+        (updatedUserPlaceInfo: Omit<UserPlaceInfo, 'user_id'>) => _post(updatedUserPlaceInfo),
+        {
+            onMutate: async () => {
+                await queryClient.cancelQueries(['userPlaces', authUser?.uid])
+            },
+            onSettled: () => {
+                queryClient.invalidateQueries(['userPlaces', authUser?.uid])
+            },
         },
-        onSettled: () => {
-            queryClient.invalidateQueries(['userPlaces', authUser?.uid])
+    )
+    return mutation
+}
+
+export const useCreateUserPlaceInfo = () => {
+    const authUser = useCurrentUser()
+    const _post = async (userPlaceInfo: Omit<UserPlaceInfo, 'user_id'>) => {
+        if (!authUser) {
+            throw Error('Not Logged In')
+        }
+        const newUserPlaceInfo = {
+            desire: userPlaceInfo.desire,
+            rating: userPlaceInfo.rating,
+            hard_no: userPlaceInfo.hard_no,
+            user_id: authUser.uid,
+            place_id: userPlaceInfo.place_id,
+        }
+        const ref = doc(db, `users/${authUser.uid}/places/${userPlaceInfo.place_id}`)
+        await setDoc(ref, newUserPlaceInfo)
+        return newUserPlaceInfo
+    }
+    const queryClient = useQueryClient()
+    const mutation = useMutation(
+        (userPlaceInfo: Omit<UserPlaceInfo, 'user_id'>) => _post(userPlaceInfo),
+        {
+            onMutate: async () => {
+                await queryClient.cancelQueries(['userPlaces', authUser?.uid])
+                await queryClient.cancelQueries(['places'])
+            },
+            onSettled: () => {
+                queryClient.invalidateQueries(['userPlaces', authUser?.uid])
+                queryClient.invalidateQueries(['places'])
+            },
         },
-    })
+    )
     return mutation
 }
