@@ -4,7 +4,7 @@ import {
     useAutocompleteSuggestions,
     usePlaceDetails,
 } from 'services/map_service'
-import { Card, Button, Switch, AutoComplete } from 'antd'
+import { Card, Button, Switch, AutoComplete, Input } from 'antd'
 import { ExportOutlined, StarFilled, StarOutlined, DeleteOutlined } from '@ant-design/icons'
 import {
     usePlaces,
@@ -17,6 +17,8 @@ import {
 } from 'services/place_service'
 import useDebounce from 'hooks/useDebounce'
 import styled, { css } from 'styled-components'
+import { v4 as uuidv4 } from 'uuid'
+
 export interface PlacesProps {}
 
 const PlaceCard = ({
@@ -42,7 +44,7 @@ const PlaceCard = ({
         <Card
             title={
                 <div>
-                    {place.name} • {place.vicinity}
+                    {place.name} • {place?.vicinity ?? ''}
                 </div>
             }
             style={{ width: '100%' }}
@@ -62,14 +64,18 @@ const PlaceCard = ({
                         gap: '5px',
                     }}
                 >
-                    <Button href={place.website} target="_blank" style={{ color: 'blue' }}>
-                        View Website
-                        <ExportOutlined />
-                    </Button>
-                    <Button href={place.url} target="_blank" style={{ color: 'blue' }}>
-                        View In Google Maps
-                        <ExportOutlined />
-                    </Button>
+                    {place.website ? (
+                        <Button href={place.website} target="_blank" style={{ color: 'blue' }}>
+                            View Website
+                            <ExportOutlined />
+                        </Button>
+                    ) : null}
+                    {place.url ? (
+                        <Button href={place.url} target="_blank" style={{ color: 'blue' }}>
+                            View In Google Maps
+                            <ExportOutlined />
+                        </Button>
+                    ) : null}
                 </div>
                 {userPlaceInfo?.hard_no ? (
                     <HardNo
@@ -323,10 +329,20 @@ const Places = ({}: PlacesProps) => {
         return []
     }, [_autoCompleteSuggestions, places, debouncedPlaceSearchQuery])
 
+    const [autoCompleteDropDownIsOpen, setautoCompleteDropDownIsOpen] = useState(false)
+    const createPlaceMutation = useCreatePlace()
+    const [manualPlace, setManualPlace] = useState<Partial<Place>>({})
+
     return (
         <PlaceWrap>
             <PlaceSearchWrap>
+                <style>{`.ensureHeight{max-height: 175px;}`}</style>
+
                 <AutoComplete
+                    popupClassName={'ensureHeight'}
+                    onDropdownVisibleChange={open => {
+                        setautoCompleteDropDownIsOpen(open)
+                    }}
                     autoFocus
                     placeholder="Search..."
                     allowClear
@@ -364,6 +380,73 @@ const Places = ({}: PlacesProps) => {
                             setSelectedPlaceID(undefined)
                         }}
                     />
+                ) : null}
+                {debouncedPlaceSearchQuery.length > 0 && places.length === 0 ? (
+                    <Card
+                        title="Add Manually"
+                        style={{ marginTop: autoCompleteDropDownIsOpen ? '150px' : undefined }}
+                    >
+                        <div
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '5px',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <Input
+                                placeholder="Name"
+                                value={manualPlace.name}
+                                onChange={e => {
+                                    setManualPlace(p => ({ ...p, name: e.target.value }))
+                                }}
+                            />
+                            <Input
+                                placeholder="Street Address"
+                                value={manualPlace.vicinity}
+                                onChange={e => {
+                                    setManualPlace(p => ({ ...p, vicinity: e.target.value }))
+                                }}
+                            />
+                            <Input
+                                placeholder="Website URL"
+                                value={manualPlace.website}
+                                onChange={e => {
+                                    setManualPlace(p => ({ ...p, website: e.target.value }))
+                                }}
+                            />
+                            <Input
+                                placeholder="Google Maps URL"
+                                value={manualPlace.url}
+                                onChange={e => {
+                                    setManualPlace(p => ({ ...p, url: e.target.value }))
+                                }}
+                            />
+                            <Button
+                                style={{ alignSelf: 'flex-end' }}
+                                disabled={!manualPlace.name}
+                                type="primary"
+                                onClick={() => {
+                                    if (manualPlace.name !== undefined) {
+                                        createPlaceMutation.mutate(
+                                            {
+                                                ...manualPlace,
+                                                name: manualPlace.name,
+                                                place_id: uuidv4(),
+                                            },
+                                            {
+                                                onSettled: () => {
+                                                    setManualPlace({})
+                                                },
+                                            },
+                                        )
+                                    }
+                                }}
+                            >
+                                Create
+                            </Button>
+                        </div>
+                    </Card>
                 ) : null}
             </PlaceSearchWrap>
             <PlaceListWrap>

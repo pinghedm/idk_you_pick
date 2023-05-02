@@ -11,7 +11,12 @@ import {
 } from 'firebase/firestore'
 import { PlaceAutocompleteResult } from 'services/map_service'
 
-export type Place = PlaceAutocompleteResult
+export type Place = Omit<PlaceAutocompleteResult, 'vicinity' | 'url' | 'website'> & {
+    vicinity?: string
+    url?: string
+    website?: string
+    addedBy?: string
+}
 
 export interface UserPlaceInfo {
     user_id: string
