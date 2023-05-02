@@ -4,7 +4,18 @@ import {
     useAutocompleteSuggestions,
     usePlaceDetails,
 } from 'services/map_service'
-import { Card, Button, Switch, AutoComplete, Input, Typography, Tooltip, Checkbox } from 'antd'
+import {
+    Card,
+    Button,
+    Switch,
+    AutoComplete,
+    Input,
+    Typography,
+    Tooltip,
+    Checkbox,
+    Tag,
+    Select,
+} from 'antd'
 import {
     ExportOutlined,
     StarFilled,
@@ -33,11 +44,13 @@ const PlaceCard = ({
     userPlaceInfo,
     showSave,
     clearSearch,
+    allTags,
 }: {
     place: Place
     userPlaceInfo: UserPlaceInfo | null
     showSave: boolean
     clearSearch?: () => void
+    allTags: Set<string>
 }) => {
     const createPlaceMutation = useCreatePlace()
     const useCreateUserPlaceInfoMutation = useCreateUserPlaceInfo()
@@ -47,12 +60,14 @@ const PlaceCard = ({
         rating: userPlaceInfo?.rating ?? null,
         hard_no: userPlaceInfo?.hard_no ?? false,
         notes: userPlaceInfo?.notes ?? '',
+        tags: userPlaceInfo?.tags ?? [],
     })
     const { data: users } = useUsers()
     const userById: Record<string, User> = useMemo(
         () => (users ?? []).reduce((memo, next) => ({ ...memo, [next.id]: next }), {}),
         [users],
     )
+    const [newTag, setNewTag] = useState('')
     return (
         <Card
             title={
@@ -172,6 +187,86 @@ const PlaceCard = ({
                         'Unknown User'}
                 </Typography.Text>
             ) : null}
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '5px',
+                    marginTop: '5px',
+                    marginBottom: '5px',
+                }}
+            >
+                <div
+                    style={{ display: 'flex', flexDirection: 'row', gap: '2px', flexWrap: 'wrap' }}
+                >
+                    {(newPlaceInfo?.tags ?? []).map(t => (
+                        <Tag
+                            key={t}
+                            closable
+                            onClose={() => {
+                                const newTags = (userPlaceInfo?.tags ?? []).filter(t_ => t_ !== t)
+                                setNewPlaceInfo(pi => ({
+                                    ...pi,
+                                    tags: newTags,
+                                }))
+                                if (!showSave) {
+                                    updateUserPlaceInfoMutation.mutate({
+                                        ...newPlaceInfo,
+                                        tags: newTags,
+                                        place_id: place.place_id,
+                                    })
+                                }
+                            }}
+                        >
+                            {t}
+                        </Tag>
+                    ))}
+                </div>
+                <AutoComplete
+                    style={{ width: '200px' }}
+                    placeholder="New Tag"
+                    allowClear
+                    value={newTag}
+                    onChange={val => {
+                        setNewTag(val)
+                    }}
+                    options={Array.from(allTags).map(t => ({ value: t }))}
+                    onSelect={val => {
+                        setNewTag('')
+                        if (!newPlaceInfo?.tags?.includes(val)) {
+                            const newTags = [...(userPlaceInfo?.tags ?? []), val]
+                            setNewPlaceInfo(pi => ({ ...pi, tags: newTags }))
+
+                            if (!showSave) {
+                                updateUserPlaceInfoMutation.mutate({
+                                    ...newPlaceInfo,
+                                    tags: newTags,
+                                    place_id: place.place_id,
+                                })
+                            }
+                        }
+                    }}
+                    onKeyUp={e => {
+                        if (e.key === 'Enter') {
+                            if (!newPlaceInfo?.tags?.includes(newTag)) {
+                                const newTags = [...(userPlaceInfo?.tags ?? []), newTag]
+                                setNewPlaceInfo(pi => ({
+                                    ...pi,
+                                    tags: newTags,
+                                }))
+                                if (!showSave) {
+                                    updateUserPlaceInfoMutation.mutate({
+                                        ...newPlaceInfo,
+                                        tags: newTags,
+                                        place_id: place.place_id,
+                                    })
+                                }
+                            }
+                            setNewTag('')
+                        }
+                    }}
+                />
+            </div>
             <Input.TextArea
                 placeholder="Notes"
                 value={newPlaceInfo.notes}
@@ -342,6 +437,14 @@ const Places = ({}: PlacesProps) => {
         [userPlaceInfos],
     )
 
+    const allTags = useMemo(() => {
+        const tags = new Set<string>()
+        ;(userPlaceInfos ?? []).forEach(upi => {
+            ;(upi?.tags ?? []).forEach(t => tags.add(t))
+        })
+        return tags
+    }, [userPlaceInfos])
+
     const [selectedPlaceID, setSelectedPlaceID] = useState<string | undefined>(undefined)
     const { data: newPlaceDetails } = usePlaceDetails(selectedPlaceID ?? '')
 
@@ -379,7 +482,8 @@ const Places = ({}: PlacesProps) => {
         hideRated: boolean
         hideDesired: boolean
         hideHardNo: boolean
-    }>({ hideRated: false, hideDesired: false, hideHardNo: true })
+        tags: string[]
+    }>({ hideRated: false, hideDesired: false, hideHardNo: true, tags: [] })
 
     const filteredPlaces = useMemo(
         () =>
@@ -388,7 +492,10 @@ const Places = ({}: PlacesProps) => {
                 const passHardNo = !((userPlaceInfo?.hard_no ?? false) && placeFilters.hideHardNo)
                 const passRated = !(placeFilters.hideRated && userPlaceInfo?.rating)
                 const passDesired = !(placeFilters.hideDesired && userPlaceInfo?.desire)
-                return passHardNo && passRated && passDesired
+                const passTags =
+                    !placeFilters.tags.length ||
+                    placeFilters.tags.some(tag => (userPlaceInfo?.tags ?? []).includes(tag))
+                return passHardNo && passRated && passDesired && passTags
             }),
         [places, placeFilters, userPlaceInfoByPlaceId],
     )
@@ -397,33 +504,67 @@ const Places = ({}: PlacesProps) => {
         <PlaceWrap>
             <PlaceSearchWrap>
                 <style>{`.ensureHeight{max-height: 175px;}`}</style>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ display: 'flex', flexDirection: 'row', gap: '5px' }}>
-                        <Checkbox
-                            checked={placeFilters.hideRated}
-                            onChange={e => {
-                                setPlaceFilters(pf => ({ ...pf, hideRated: e.target.checked }))
+                <div style={{ display: 'flex', flexDirection: 'row', gap: '5px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                        <div style={{ display: 'flex', flexDirection: 'row', gap: '5px' }}>
+                            <Checkbox
+                                checked={placeFilters.hideRated}
+                                onChange={e => {
+                                    setPlaceFilters(pf => ({ ...pf, hideRated: e.target.checked }))
+                                }}
+                            />
+                            Hide Places I Have Been
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'row', gap: '5px' }}>
+                            <Checkbox
+                                checked={placeFilters.hideDesired}
+                                onChange={e => {
+                                    setPlaceFilters(pf => ({
+                                        ...pf,
+                                        hideDesired: e.target.checked,
+                                    }))
+                                }}
+                            />{' '}
+                            Hide Places I Want To Go
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'row', gap: '5px' }}>
+                            <Checkbox
+                                checked={placeFilters.hideHardNo}
+                                onChange={e => {
+                                    setPlaceFilters(pf => ({ ...pf, hideHardNo: e.target.checked }))
+                                }}
+                            />{' '}
+                            Hide My Hard Nos
+                        </div>
+                        <div
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'row',
+                                gap: '5px',
+                                alignItems: 'center',
                             }}
-                        />
-                        Hide Places I Have Been
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'row', gap: '5px' }}>
-                        <Checkbox
-                            checked={placeFilters.hideDesired}
-                            onChange={e => {
-                                setPlaceFilters(pf => ({ ...pf, hideDesired: e.target.checked }))
-                            }}
-                        />{' '}
-                        Hide Places I Want To Go
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'row', gap: '5px' }}>
-                        <Checkbox
-                            checked={placeFilters.hideHardNo}
-                            onChange={e => {
-                                setPlaceFilters(pf => ({ ...pf, hideHardNo: e.target.checked }))
-                            }}
-                        />{' '}
-                        Hide My Hard Nos
+                        >
+                            Filter By Tags:
+                            <Select
+                                style={{ flex: 1 }}
+                                value={placeFilters.tags}
+                                placeholder="Filter By Tag"
+                                mode="multiple"
+                                allowClear
+                                showSearch
+                                options={Array.from(allTags).map(t => ({
+                                    value: t,
+                                    key: t,
+                                    label: t,
+                                }))}
+                                onChange={tags => {
+                                    setPlaceFilters(pf => ({ ...pf, tags: tags }))
+                                }}
+                                showArrow
+                                maxTagCount="responsive"
+                                dropdownMatchSelectWidth={false}
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -468,6 +609,7 @@ const Places = ({}: PlacesProps) => {
                             setPlaceSearchQuery('')
                             setSelectedPlaceID(undefined)
                         }}
+                        allTags={allTags}
                     />
                 ) : null}
                 {debouncedPlaceSearchQuery.length > 0 && places.length === 0 && !selectedPlaceID ? (
@@ -550,6 +692,7 @@ const Places = ({}: PlacesProps) => {
                         place={p}
                         userPlaceInfo={userPlaceInfoByPlaceId?.[p.place_id] ?? null}
                         showSave={false}
+                        allTags={allTags}
                     />
                 ))}
             </PlaceListWrap>

@@ -25,6 +25,7 @@ export interface UserPlaceInfo {
     rating: number | null
     hard_no: boolean
     notes?: string
+    tags?: string[]
 }
 
 export const usePlaces = () => {
@@ -129,13 +130,14 @@ export const useCreateUserPlaceInfo = () => {
         if (!authUser) {
             throw Error('Not Logged In')
         }
-        const newUserPlaceInfo = {
+        const newUserPlaceInfo: UserPlaceInfo = {
             desire: userPlaceInfo.desire,
             rating: userPlaceInfo.rating,
             hard_no: userPlaceInfo.hard_no,
             user_id: authUser.uid,
             place_id: userPlaceInfo.place_id,
             notes: userPlaceInfo.notes,
+            tags: userPlaceInfo.tags,
         }
         const ref = doc(db, `users/${authUser.uid}/places/${userPlaceInfo.place_id}`)
         await setDoc(ref, newUserPlaceInfo)

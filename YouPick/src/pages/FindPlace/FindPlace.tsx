@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useUsers, User, useCurrentUserDetails } from 'services/user_service'
-import { Typography, Button, Card, Radio, Input } from 'antd'
+import { Typography, Button, Card, Radio, Input, Tag } from 'antd'
 import {
     useMultipleUserPlaceInfos,
     UserPlaceInfo,
@@ -57,15 +57,24 @@ const UserRatingRow = ({
     uip,
     sortMode,
     forceNoteOpen,
+    forceTagsOpen,
 }: {
     uip: AugmentedUserPlaceInfo
     sortMode: 'desire' | 'rating'
     forceNoteOpen: boolean
+    forceTagsOpen: boolean
 }) => {
     const [_notesOpen, setNotesOpen] = useState(false)
+    const [_tagsOpen, setTagsOpen] = useState(false)
     const notesOpen = useMemo(() => _notesOpen || (forceNoteOpen && uip.notes), [
         forceNoteOpen,
         _notesOpen,
+        uip.notes,
+    ])
+    const tagsOpen = useMemo(() => _tagsOpen || (forceTagsOpen && (uip?.tags?.length ?? 0) > 0), [
+        forceTagsOpen,
+        _tagsOpen,
+        uip.tags,
     ])
 
     return (
@@ -105,15 +114,36 @@ const UserRatingRow = ({
                     </div>
                     {uip.name || uip.email || 'Unknown User'}{' '}
                 </div>
-                <Button
-                    disabled={!uip.notes}
-                    onClick={() => {
-                        setNotesOpen(!notesOpen)
-                    }}
-                >
-                    {notesOpen ? 'Hide' : 'Show'} Notes
-                </Button>
+                <div style={{ display: 'flex', flexDirection: 'row', gap: '5px' }}>
+                    <Button
+                        size="small"
+                        disabled={!uip.notes}
+                        onClick={() => {
+                            setNotesOpen(!notesOpen)
+                        }}
+                    >
+                        {notesOpen ? 'Hide' : 'Show'} Notes
+                    </Button>
+                    <Button
+                        size="small"
+                        disabled={(uip?.tags?.length ?? 0) === 0}
+                        onClick={() => {
+                            setTagsOpen(!tagsOpen)
+                        }}
+                    >
+                        {tagsOpen ? 'Hide' : 'Show'} Tags
+                    </Button>
+                </div>
             </div>
+            {tagsOpen ? (
+                <div
+                    style={{ display: 'flex', flexDirection: 'row', gap: '2px', flexWrap: 'wrap' }}
+                >
+                    {(uip?.tags ?? []).map(t => (
+                        <Tag key={t}>{t}</Tag>
+                    ))}
+                </div>
+            ) : null}
             {notesOpen ? <Input.TextArea readOnly value={uip.notes} /> : null}
         </div>
     )
@@ -173,6 +203,7 @@ const FindPlace = ({}: FindPlaceProps) => {
     }, [matchingUserPlaceInfos, _matchingPlaces, sortMode])
 
     const [allNotesOpen, setAllNotesOpen] = useState(false)
+    const [allTagsOpen, setAllTagsOpen] = useState(false)
     return (
         <div style={{ width: '100%', height: '100%', padding: '15px' }}>
             <Typography.Title level={3}>Find Me A Place!</Typography.Title>
@@ -217,13 +248,22 @@ const FindPlace = ({}: FindPlaceProps) => {
             {(matchingPlaces ?? []).length > 0 ? (
                 <>
                     <Typography.Title level={4}>Results:</Typography.Title>
-                    <Button
-                        onClick={() => {
-                            setAllNotesOpen(!allNotesOpen)
-                        }}
-                    >
-                        {allNotesOpen ? 'Hide' : 'Show'} All Notes
-                    </Button>
+                    <div style={{ display: 'flex', flexDirection: 'row', gap: '5px' }}>
+                        <Button
+                            onClick={() => {
+                                setAllNotesOpen(!allNotesOpen)
+                            }}
+                        >
+                            {allNotesOpen ? 'Hide' : 'Show'} All Notes
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                setAllTagsOpen(!allTagsOpen)
+                            }}
+                        >
+                            {allTagsOpen ? 'Hide' : 'Show'} All Tags
+                        </Button>
+                    </div>
                     <LocationWrap>
                         {(matchingPlaces ?? []).map(place => (
                             <CardWrap
@@ -247,6 +287,7 @@ const FindPlace = ({}: FindPlaceProps) => {
                                                 sortMode={sortMode}
                                                 key={uip.id}
                                                 forceNoteOpen={allNotesOpen}
+                                                forceTagsOpen={allTagsOpen}
                                             />
                                         ))}
                                     <div
