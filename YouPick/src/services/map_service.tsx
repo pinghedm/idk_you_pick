@@ -57,7 +57,7 @@ const PLACE_PREDICTION_DEFAULT_OPTIONS: Omit<PlacePredictionRequest, 'input'> = 
     bounds: defaultBounds,
     componentRestrictions: { country: 'us' },
     strictBounds: true,
-    types: ['restaurant'],
+    types: ['restaurant', 'bar'],
 }
 export const useAutocompleteSuggestions = (query: string, enabled: boolean) => {
     const rqQuery = useQuery(
