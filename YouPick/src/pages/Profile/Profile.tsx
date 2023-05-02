@@ -25,7 +25,7 @@ const Profile = ({}: ProfileProps) => {
                     flexDirection: 'row',
                     gap: '5px',
                     alignItems: 'center',
-                    width: '500px',
+                    width: '350px',
                 }}
             >
                 <Input

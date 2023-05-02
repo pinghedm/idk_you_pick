@@ -8,6 +8,8 @@ import {
     Place,
 } from 'services/place_service'
 import { ExportOutlined, StarOutlined, StarFilled } from '@ant-design/icons'
+import styled, { css } from 'styled-components'
+
 export interface FindPlaceProps {}
 type AugmentedUserPlaceInfo = UserPlaceInfo & User
 type AugmentedPlace = Place & {
@@ -15,6 +17,28 @@ type AugmentedPlace = Place & {
     ratingScore: number
     userPlaceInfos: AugmentedUserPlaceInfo[]
 }
+const MOBILE_BREAKPOINT = '500px'
+
+const UserWrap = styled.div`
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+
+    @media screen and (min-width: ${MOBILE_BREAKPOINT}) {
+        flex-direction: row;
+    }
+`
+
+const LocationWrap = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    @media screen and (min-width: ${MOBILE_BREAKPOINT}) {
+        flex-direction: row;
+    }
+`
 
 const FindPlace = ({}: FindPlaceProps) => {
     const { data: currentUser } = useCurrentUserDetails()
@@ -72,15 +96,7 @@ const FindPlace = ({}: FindPlaceProps) => {
         <div style={{ width: '100%', height: '100%', padding: '15px' }}>
             <Typography.Title level={3}>Find Me A Place!</Typography.Title>
             <Typography.Title level={4}>Who Is Around Tonight?</Typography.Title>
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    flexWrap: 'wrap',
-                    gap: '10px',
-                    marginBottom: '10px',
-                }}
-            >
+            <UserWrap>
                 {(users ?? [])
                     .filter(u => u.id !== currentUser?.id)
                     .map(u => (
@@ -99,7 +115,7 @@ const FindPlace = ({}: FindPlaceProps) => {
                             {u.name || u.email}
                         </Button>
                     ))}
-            </div>
+            </UserWrap>
             <div style={{ fontSize: '24px', display: 'flex', flexDirection: 'row', gap: '5px' }}>
                 Sort By:
                 <Radio.Group
@@ -119,7 +135,7 @@ const FindPlace = ({}: FindPlaceProps) => {
             {(matchingPlaces ?? []).length > 0 ? (
                 <>
                     <Typography.Title level={4}>Results:</Typography.Title>
-                    <div style={{ display: 'flex', flexDirection: 'row', gap: '5px' }}>
+                    <LocationWrap>
                         {(matchingPlaces ?? []).map(place => (
                             <Card
                                 title={
@@ -193,7 +209,7 @@ const FindPlace = ({}: FindPlaceProps) => {
                                 </div>
                             </Card>
                         ))}
-                    </div>
+                    </LocationWrap>
                 </>
             ) : null}
         </div>

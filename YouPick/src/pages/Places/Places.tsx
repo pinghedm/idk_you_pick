@@ -16,6 +16,7 @@ import {
     useUpdateUserPlaceInfo,
 } from 'services/place_service'
 import useDebounce from 'hooks/useDebounce'
+import styled, { css } from 'styled-components'
 export interface PlacesProps {}
 
 const PlaceCard = ({
@@ -239,6 +240,47 @@ const Rating = ({
     )
 }
 
+const MOBILE_BREAKPOINT = '500px'
+
+const PlaceWrap = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 15px;
+    position: relative;
+    height: 100%;
+    overflow: clip;
+    width: 100%;
+
+    @media screen and (min-width: ${MOBILE_BREAKPOINT}) {
+        flex-direction: row;
+    }
+`
+
+const PlaceSearchWrap = styled.div`
+    height: 30%;
+    width: 100%;
+    position: sticky;
+    top: 80px;
+    z-index: 2;
+    background-color: white;
+    @media screen and (min-width: ${MOBILE_BREAKPOINT}) {
+        width: 49%;
+        height: 500px;
+    }
+`
+
+const PlaceListWrap = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    height: 60%;
+    width: 100%;
+    @media screen and (min-width: ${MOBILE_BREAKPOINT}) {
+        width: 49%;
+    }
+`
+
 const Places = ({}: PlacesProps) => {
     const { data: _places } = usePlaces()
     const { data: userPlaceInfos } = useMyUserPlaceInfos()
@@ -282,36 +324,8 @@ const Places = ({}: PlacesProps) => {
     }, [_autoCompleteSuggestions, places, debouncedPlaceSearchQuery])
 
     return (
-        <div
-            style={{
-                display: 'flex',
-                flexDirection: 'row',
-                gap: '5px',
-                padding: '15px',
-                position: 'relative',
-                height: '100%',
-                overflow: 'clip',
-                width: '100%',
-            }}
-        >
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '5px',
-                    width: '49%',
-                }}
-            >
-                {places.map((p, idx) => (
-                    <PlaceCard
-                        key={p.place_id}
-                        place={p}
-                        userPlaceInfo={userPlaceInfoByPlaceId?.[p.place_id] ?? null}
-                        showSave={false}
-                    />
-                ))}
-            </div>
-            <div style={{ width: '49%', height: '500px', position: 'sticky', top: '80px' }}>
+        <PlaceWrap>
+            <PlaceSearchWrap>
                 <AutoComplete
                     autoFocus
                     placeholder="Search..."
@@ -351,8 +365,18 @@ const Places = ({}: PlacesProps) => {
                         }}
                     />
                 ) : null}
-            </div>
-        </div>
+            </PlaceSearchWrap>
+            <PlaceListWrap>
+                {places.map((p, idx) => (
+                    <PlaceCard
+                        key={p.place_id}
+                        place={p}
+                        userPlaceInfo={userPlaceInfoByPlaceId?.[p.place_id] ?? null}
+                        showSave={false}
+                    />
+                ))}
+            </PlaceListWrap>
+        </PlaceWrap>
     )
 }
 

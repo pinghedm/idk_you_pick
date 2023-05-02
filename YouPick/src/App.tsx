@@ -85,9 +85,9 @@ const ActualApp = () => {
             <Layout.Content>
                 <Routes>
                     <Route path="/" element={<Navigate to={{ pathname: 'places' }} />} />
-                    <Route path="/places" element={<Places />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/pick" element={<FindPlace />} />
+                    <Route index path="places" element={<Places />} />
+                    <Route path="profile" element={<Profile />} />
+                    <Route path="pick" element={<FindPlace />} />
                 </Routes>
             </Layout.Content>
         </Layout>
@@ -102,9 +102,10 @@ const App = () => {
     useEffect(() => {
         setMapLoaded(!!window._googlePlacesAutoComplete)
     }, [])
+    const baseName = import.meta.env.BASE_URL
     if (mapLoaded) {
         return (
-            <Router>
+            <Router basename={baseName ? baseName : undefined}>
                 <QueryClientProvider client={queryClient}>
                     <ActualApp />
                 </QueryClientProvider>
