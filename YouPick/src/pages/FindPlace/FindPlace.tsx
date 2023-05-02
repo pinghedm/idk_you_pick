@@ -219,6 +219,12 @@ const FindPlace = ({}: FindPlaceProps) => {
                                             <ExportOutlined />
                                         </Button>
                                     </div>
+                                    <Typography.Text type="secondary">
+                                        Added By:{' '}
+                                        {userById?.[place.addedBy ?? '']?.name ||
+                                            userById?.[place.addedBy ?? '']?.email ||
+                                            'Unknown User'}
+                                    </Typography.Text>
                                 </div>
                             </CardWrap>
                         ))}

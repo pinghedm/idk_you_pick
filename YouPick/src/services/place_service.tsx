@@ -56,10 +56,16 @@ export const useMatchingPlaces = (placeIds: string[]) => {
 }
 
 export const useCreatePlace = () => {
+    const authUser = useCurrentUser()
+
     const _post = async (place: Place) => {
+        if (!authUser) {
+            throw Error('Not Logged In')
+        }
         const ref = doc(db, 'places/' + place.place_id)
-        await setDoc(ref, place)
-        return place
+        const placeToAdd = { ...place, addedBy: authUser.uid }
+        await setDoc(ref, placeToAdd)
+        return placeToAdd
     }
     const queryClient = useQueryClient()
     const mutation = useMutation((place: Place) => _post(place), {

@@ -4,7 +4,7 @@ import {
     useAutocompleteSuggestions,
     usePlaceDetails,
 } from 'services/map_service'
-import { Card, Button, Switch, AutoComplete, Input } from 'antd'
+import { Card, Button, Switch, AutoComplete, Input, Typography } from 'antd'
 import { ExportOutlined, StarFilled, StarOutlined, DeleteOutlined } from '@ant-design/icons'
 import {
     usePlaces,
@@ -18,6 +18,7 @@ import {
 import useDebounce from 'hooks/useDebounce'
 import styled, { css } from 'styled-components'
 import { v4 as uuidv4 } from 'uuid'
+import { useUsers, User } from 'services/user_service'
 
 export interface PlacesProps {}
 
@@ -40,6 +41,11 @@ const PlaceCard = ({
         rating: null,
         hard_no: false,
     })
+    const { data: users } = useUsers()
+    const userById: Record<string, User> = useMemo(
+        () => (users ?? []).reduce((memo, next) => ({ ...memo, [next.id]: next }), {}),
+        [users],
+    )
     return (
         <Card
             title={
@@ -149,6 +155,14 @@ const PlaceCard = ({
                     </div>
                 )}
             </div>
+            {!showSave ? (
+                <Typography.Text type="secondary">
+                    Added By:{' '}
+                    {userById?.[place.addedBy ?? '']?.name ||
+                        userById?.[place.addedBy ?? '']?.email ||
+                        'Unknown User'}
+                </Typography.Text>
+            ) : null}
             <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end' }}>
                 {showSave ? (
                     <Button
