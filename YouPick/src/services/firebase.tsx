@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { initializeApp } from 'firebase/app'
 import {
     getAuth,
@@ -20,7 +20,7 @@ const firebaseConfig = {
 }
 
 const app = initializeApp(firebaseConfig)
-export const auth = getAuth()
+const auth = getAuth()
 const emulatorAuthDomain = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || ''
 if (emulatorAuthDomain.includes('localhost')) {
     connectAuthEmulator(auth, emulatorAuthDomain)
@@ -37,11 +37,13 @@ if (databaseUrl.includes('localhost')) {
 // auth
 export const useCurrentUser = () => {
     const [curUser, setCurUser] = useState(auth.currentUser)
-    onAuthStateChanged(auth, user => {
-        if (user) {
-            setCurUser(user)
-        }
-    })
+    useEffect(() => {
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                setCurUser(user)
+            }
+        })
+    }, [])
     return curUser
 }
 

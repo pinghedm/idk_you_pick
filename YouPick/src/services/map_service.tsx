@@ -80,7 +80,6 @@ export const usePlaceDetails = (placeId: string) => {
                 window._googlePlacesService.getDetails(
                     { placeId, fields: [...PlacesAPIAttributes] },
                     (place, status) => {
-                        console.log(place, status, status === window._googlePlacesServiceStatus.OK)
                         if (status === window._googlePlacesServiceStatus.OK) {
                             return promiseRes(place)
                         } else {

@@ -15,8 +15,8 @@ import {
 import Places from 'pages/Places/Places.lazy'
 import Profile from 'pages/Profile/Profile.lazy'
 import Login from 'pages/Login/Login.lazy'
+import FindPlace from 'pages/FindPlace/FindPlace.lazy'
 import { useCurrentUser, logout } from 'services/firebase'
-import { useCurrentUserDetails } from 'services/user_service'
 
 type MenuOption = 'places' | 'pick' | 'friends' | 'profile' | 'logout'
 const Header = () => {
@@ -53,10 +53,10 @@ const Header = () => {
                             key: 'pick',
                             label: 'Do Something Tonight',
                         },
-                        {
-                            key: 'friends',
-                            label: 'Friends',
-                        },
+                        // {
+                        //     key: 'friends',
+                        //     label: 'Friends',
+                        // },
                         { key: 'profile', label: 'Profile' },
                     ]}
                 ></Menu>
@@ -87,6 +87,7 @@ const ActualApp = () => {
                     <Route path="/" element={<Navigate to={{ pathname: 'places' }} />} />
                     <Route path="/places" element={<Places />} />
                     <Route path="/profile" element={<Profile />} />
+                    <Route path="/pick" element={<FindPlace />} />
                 </Routes>
             </Layout.Content>
         </Layout>

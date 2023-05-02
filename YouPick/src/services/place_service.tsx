@@ -7,6 +7,7 @@ import {
     getDocs,
     collection,
     query as firebaseQuery,
+    where,
 } from 'firebase/firestore'
 import { PlaceAutocompleteResult } from 'services/map_service'
 
@@ -34,6 +35,21 @@ export const usePlaces = () => {
     return query
 }
 
+export const useMatchingPlaces = (placeIds: string[]) => {
+    const _get = async (placeIds: string[]) => {
+        const ref = collection(db, 'places')
+        const q = firebaseQuery(ref, where('place_id', 'in', placeIds))
+        const places: Place[] = []
+        const queryResult = await getDocs(q)
+        queryResult.forEach(d => places.push(d.data() as Place))
+        return places
+    }
+    const query = useQuery(['places', placeIds.sort()], () => _get(placeIds), {
+        enabled: placeIds.length > 0,
+    })
+    return query
+}
+
 export const useCreatePlace = () => {
     const _post = async (place: Place) => {
         const ref = doc(db, 'places/' + place.place_id)
@@ -52,7 +68,7 @@ export const useCreatePlace = () => {
     return mutation
 }
 
-export const useUserPlaceInfos = () => {
+export const useMyUserPlaceInfos = () => {
     const authUser = useCurrentUser()
     const _get = async () => {
         if (!authUser) {
@@ -127,4 +143,26 @@ export const useCreateUserPlaceInfo = () => {
         },
     )
     return mutation
+}
+
+export const useMultipleUserPlaceInfos = (userIds: string[]) => {
+    const authUser = useCurrentUser()
+    const _get = async (_userIds: string[]) => {
+        if (!authUser) {
+            return []
+        }
+        const places: UserPlaceInfo[] = []
+        const userIds = [..._userIds, authUser.uid]
+        for (let userId of userIds) {
+            const ref = collection(db, `users/${userId}/places`)
+            const q = firebaseQuery(ref)
+            const queryResult = await getDocs(q)
+            queryResult.forEach(upi => places.push(upi.data() as UserPlaceInfo))
+        }
+        return places
+    }
+    const query = useQuery(['findPlaces', userIds.sort()], () => _get(userIds), {
+        enabled: userIds.length > 0,
+    })
+    return query
 }

@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
     PlaceAutocompleteResult,
     useAutocompleteSuggestions,
     usePlaceDetails,
 } from 'services/map_service'
-import { Input, Card, Button, Switch, AutoComplete } from 'antd'
+import { Card, Button, Switch, AutoComplete } from 'antd'
 import { ExportOutlined, StarFilled, StarOutlined, DeleteOutlined } from '@ant-design/icons'
 import {
     usePlaces,
     Place,
-    useUserPlaceInfos,
+    useMyUserPlaceInfos,
     useCreateUserPlaceInfo,
     useCreatePlace,
     UserPlaceInfo,
@@ -241,7 +241,7 @@ const Rating = ({
 
 const Places = ({}: PlacesProps) => {
     const { data: _places } = usePlaces()
-    const { data: userPlaceInfos } = useUserPlaceInfos()
+    const { data: userPlaceInfos } = useMyUserPlaceInfos()
     const userPlaceInfoByPlaceId = useMemo(
         () =>
             (userPlaceInfos ?? []).reduce(
@@ -347,6 +347,7 @@ const Places = ({}: PlacesProps) => {
                         showSave
                         clearSearch={() => {
                             setPlaceSearchQuery('')
+                            setSelectedPlaceID(undefined)
                         }}
                     />
                 ) : null}

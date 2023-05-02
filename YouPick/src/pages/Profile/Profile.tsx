@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useCurrentUserDetails, useUpdateCurrentUser } from 'services/user_service'
 import { Input, Button, Spin } from 'antd'
 import { CheckOutlined } from '@ant-design/icons'
@@ -9,6 +9,11 @@ const Profile = ({}: ProfileProps) => {
     const updateUserMutation = useUpdateCurrentUser()
 
     const [newName, setNewName] = useState<string | undefined>(currentUser?.name)
+    useEffect(() => {
+        if (status !== 'loading' && currentUser?.name) {
+            setNewName(currentUser.name)
+        }
+    }, [currentUser, status])
     if (status !== 'success') {
         return <Spin />
     }
