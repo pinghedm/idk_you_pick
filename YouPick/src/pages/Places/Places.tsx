@@ -4,8 +4,14 @@ import {
     useAutocompleteSuggestions,
     usePlaceDetails,
 } from 'services/map_service'
-import { Card, Button, Switch, AutoComplete, Input, Typography } from 'antd'
-import { ExportOutlined, StarFilled, StarOutlined, DeleteOutlined } from '@ant-design/icons'
+import { Card, Button, Switch, AutoComplete, Input, Typography, Tooltip } from 'antd'
+import {
+    ExportOutlined,
+    StarFilled,
+    StarOutlined,
+    DeleteOutlined,
+    InfoCircleFilled,
+} from '@ant-design/icons'
 import {
     usePlaces,
     Place,
@@ -105,24 +111,28 @@ const PlaceCard = ({
                             gap: '5px',
                         }}
                     >
-                        <Rating
-                            label="Interest"
-                            currentRating={
-                                showSave ? newPlaceInfo.desire : userPlaceInfo?.desire ?? null
-                            }
-                            onSelect={newDesire => {
-                                const newPlaceInfo_ = { ...newPlaceInfo, desire: newDesire }
-                                setNewPlaceInfo(newPlaceInfo_)
-                                if (!showSave) {
-                                    updateUserPlaceInfoMutation.mutate({
-                                        ...newPlaceInfo_,
-                                        place_id: place.place_id,
-                                    })
+                        {userPlaceInfo?.rating ? null : (
+                            <Rating
+                                label="Interest"
+                                helpText="How interested are you in visiting this place, if you haven't been?"
+                                currentRating={
+                                    showSave ? newPlaceInfo.desire : userPlaceInfo?.desire ?? null
                                 }
-                            }}
-                        />
+                                onSelect={newDesire => {
+                                    const newPlaceInfo_ = { ...newPlaceInfo, desire: newDesire }
+                                    setNewPlaceInfo(newPlaceInfo_)
+                                    if (!showSave) {
+                                        updateUserPlaceInfoMutation.mutate({
+                                            ...newPlaceInfo_,
+                                            place_id: place.place_id,
+                                        })
+                                    }
+                                }}
+                            />
+                        )}
                         <Rating
                             label="Rating"
+                            helpText="How happy would you be to go to this place again, if you have been?"
                             currentRating={
                                 showSave ? newPlaceInfo.rating : userPlaceInfo?.rating ?? null
                             }
@@ -137,21 +147,25 @@ const PlaceCard = ({
                                 }
                             }}
                         />
-                        <HardNo
-                            hardNo={
-                                showSave ? newPlaceInfo.hard_no : userPlaceInfo?.hard_no ?? false
-                            }
-                            onChange={hardNo => {
-                                const newPlaceInfo_ = { ...newPlaceInfo, hard_no: hardNo }
-                                setNewPlaceInfo(newPlaceInfo_)
-                                if (!showSave) {
-                                    updateUserPlaceInfoMutation.mutate({
-                                        ...newPlaceInfo_,
-                                        place_id: place.place_id,
-                                    })
+                        {userPlaceInfo?.rating || userPlaceInfo?.desire ? null : (
+                            <HardNo
+                                hardNo={
+                                    showSave
+                                        ? newPlaceInfo.hard_no
+                                        : userPlaceInfo?.hard_no ?? false
                                 }
-                            }}
-                        />
+                                onChange={hardNo => {
+                                    const newPlaceInfo_ = { ...newPlaceInfo, hard_no: hardNo }
+                                    setNewPlaceInfo(newPlaceInfo_)
+                                    if (!showSave) {
+                                        updateUserPlaceInfoMutation.mutate({
+                                            ...newPlaceInfo_,
+                                            place_id: place.place_id,
+                                        })
+                                    }
+                                }}
+                            />
+                        )}
                     </div>
                 )}
             </div>
@@ -213,10 +227,12 @@ const Rating = ({
     currentRating,
     onSelect,
     label,
+    helpText,
 }: {
     label: string
     currentRating: number | null
     onSelect: (newRating: number | null) => void
+    helpText: string
 }) => {
     return (
         <div
@@ -228,6 +244,9 @@ const Rating = ({
                 alignItems: 'center',
             }}
         >
+            <Tooltip title={helpText}>
+                <InfoCircleFilled style={{ fontSize: '14px' }} />
+            </Tooltip>
             <span style={{ width: '100px' }}>{label}: </span>
             {[1, 2, 3, 4, 5].map(rating => {
                 if (currentRating === null || rating > currentRating) {
