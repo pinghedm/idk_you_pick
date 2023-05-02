@@ -22,12 +22,12 @@ const MOBILE_BREAKPOINT = '500px'
 const UserWrap = styled.div`
     display: flex;
     flex-direction: column;
-    flex-wrap: wrap;
     gap: 10px;
     margin-bottom: 10px;
 
     @media screen and (min-width: ${MOBILE_BREAKPOINT}) {
         flex-direction: row;
+        flex-wrap: wrap;
     }
 `
 
@@ -37,6 +37,7 @@ const LocationWrap = styled.div`
     gap: 5px;
     @media screen and (min-width: ${MOBILE_BREAKPOINT}) {
         flex-direction: row;
+        flex-wrap: wrap;
     }
 `
 
