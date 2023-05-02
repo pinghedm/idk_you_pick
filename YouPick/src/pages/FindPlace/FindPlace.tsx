@@ -41,6 +41,18 @@ const LocationWrap = styled.div`
     }
 `
 
+const CardWrap = styled(Card)`
+    width: 100%;
+    & .ant-card-head-title {
+        overflow: unset;
+        white-space: unset;
+    }
+    @media screen and (min-width: ${MOBILE_BREAKPOINT}) {
+        width: 30%;
+        min-width: 400px;
+    }
+`
+
 const FindPlace = ({}: FindPlaceProps) => {
     const { data: currentUser } = useCurrentUserDetails()
     const { data: users } = useUsers()
@@ -138,7 +150,7 @@ const FindPlace = ({}: FindPlaceProps) => {
                     <Typography.Title level={4}>Results:</Typography.Title>
                     <LocationWrap>
                         {(matchingPlaces ?? []).map(place => (
-                            <Card
+                            <CardWrap
                                 title={
                                     <div>
                                         {place.name} • {place.vicinity}
@@ -208,7 +220,7 @@ const FindPlace = ({}: FindPlaceProps) => {
                                         </Button>
                                     </div>
                                 </div>
-                            </Card>
+                            </CardWrap>
                         ))}
                     </LocationWrap>
                 </>
