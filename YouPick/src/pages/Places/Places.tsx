@@ -43,9 +43,10 @@ const PlaceCard = ({
     const useCreateUserPlaceInfoMutation = useCreateUserPlaceInfo()
     const updateUserPlaceInfoMutation = useUpdateUserPlaceInfo()
     const [newPlaceInfo, setNewPlaceInfo] = useState<Omit<UserPlaceInfo, 'user_id' | 'place_id'>>({
-        desire: null,
-        rating: null,
-        hard_no: false,
+        desire: userPlaceInfo?.desire ?? null,
+        rating: userPlaceInfo?.rating ?? null,
+        hard_no: userPlaceInfo?.hard_no ?? false,
+        notes: userPlaceInfo?.notes ?? '',
     })
     const { data: users } = useUsers()
     const userById: Record<string, User> = useMemo(
@@ -89,9 +90,9 @@ const PlaceCard = ({
                         </Button>
                     ) : null}
                 </div>
-                {userPlaceInfo?.hard_no ? (
+                {newPlaceInfo?.hard_no ? (
                     <HardNo
-                        hardNo={showSave ? newPlaceInfo.hard_no : userPlaceInfo?.hard_no ?? false}
+                        hardNo={newPlaceInfo.hard_no}
                         onChange={hardNo => {
                             const newPlaceInfo_ = { ...newPlaceInfo, hard_no: hardNo }
                             setNewPlaceInfo(newPlaceInfo_)
@@ -111,7 +112,7 @@ const PlaceCard = ({
                             gap: '5px',
                         }}
                     >
-                        {userPlaceInfo?.rating ? null : (
+                        {newPlaceInfo?.rating && !showSave ? null : (
                             <Rating
                                 label="Interest"
                                 helpText="How interested are you in visiting this place, if you haven't been?"
@@ -133,9 +134,7 @@ const PlaceCard = ({
                         <Rating
                             label="Rating"
                             helpText="How happy would you be to go to this place again, if you have been?"
-                            currentRating={
-                                showSave ? newPlaceInfo.rating : userPlaceInfo?.rating ?? null
-                            }
+                            currentRating={newPlaceInfo.rating}
                             onSelect={newRating => {
                                 const newPlaceInfo_ = { ...newPlaceInfo, rating: newRating }
                                 setNewPlaceInfo(newPlaceInfo_)
@@ -147,13 +146,9 @@ const PlaceCard = ({
                                 }
                             }}
                         />
-                        {userPlaceInfo?.rating || userPlaceInfo?.desire ? null : (
+                        {!showSave && (userPlaceInfo?.rating || userPlaceInfo?.desire) ? null : (
                             <HardNo
-                                hardNo={
-                                    showSave
-                                        ? newPlaceInfo.hard_no
-                                        : userPlaceInfo?.hard_no ?? false
-                                }
+                                hardNo={newPlaceInfo.hard_no}
                                 onChange={hardNo => {
                                     const newPlaceInfo_ = { ...newPlaceInfo, hard_no: hardNo }
                                     setNewPlaceInfo(newPlaceInfo_)
@@ -177,6 +172,21 @@ const PlaceCard = ({
                         'Unknown User'}
                 </Typography.Text>
             ) : null}
+            <Input.TextArea
+                placeholder="Notes"
+                value={newPlaceInfo.notes}
+                onChange={e => {
+                    setNewPlaceInfo(pi => ({ ...pi, notes: e.target.value }))
+                }}
+                onBlur={e => {
+                    if (!showSave) {
+                        updateUserPlaceInfoMutation.mutate({
+                            ...newPlaceInfo,
+                            place_id: place.place_id,
+                        })
+                    }
+                }}
+            />
             <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end' }}>
                 {showSave ? (
                     <Button
@@ -460,7 +470,7 @@ const Places = ({}: PlacesProps) => {
                         }}
                     />
                 ) : null}
-                {debouncedPlaceSearchQuery.length > 0 && places.length === 0 ? (
+                {debouncedPlaceSearchQuery.length > 0 && places.length === 0 && !selectedPlaceID ? (
                     <Card
                         title="Add Manually"
                         style={{ marginTop: autoCompleteDropDownIsOpen ? '150px' : undefined }}

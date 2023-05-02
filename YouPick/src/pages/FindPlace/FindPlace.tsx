@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useUsers, User, useCurrentUserDetails } from 'services/user_service'
-import { Typography, Button, Card, Radio } from 'antd'
+import { Typography, Button, Card, Radio, Input } from 'antd'
 import {
     useMultipleUserPlaceInfos,
     UserPlaceInfo,
@@ -52,6 +52,72 @@ const CardWrap = styled(Card)`
         min-width: 400px;
     }
 `
+
+const UserRatingRow = ({
+    uip,
+    sortMode,
+    forceNoteOpen,
+}: {
+    uip: AugmentedUserPlaceInfo
+    sortMode: 'desire' | 'rating'
+    forceNoteOpen: boolean
+}) => {
+    const [_notesOpen, setNotesOpen] = useState(false)
+    const notesOpen = useMemo(() => _notesOpen || (forceNoteOpen && uip.notes), [
+        forceNoteOpen,
+        _notesOpen,
+    ])
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div
+                style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                }}
+            >
+                <div
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        gap: '5px',
+                        alignItems: 'center',
+                        flex: 1,
+                    }}
+                >
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            gap: '1px',
+                        }}
+                    >
+                        {[1, 2, 3, 4, 5].map(rating => {
+                            const score = sortMode === 'desire' ? uip.desire : uip.rating
+                            if (score === null || rating > score) {
+                                return <StarOutlined key={rating} />
+                            } else {
+                                return <StarFilled key={rating} />
+                            }
+                        })}
+                    </div>
+                    {uip.name || uip.email || 'Unknown User'}{' '}
+                </div>
+                <Button
+                    disabled={!uip.notes}
+                    onClick={() => {
+                        setNotesOpen(!notesOpen)
+                    }}
+                >
+                    {notesOpen ? 'Hide' : 'Show'} Notes
+                </Button>
+            </div>
+            {notesOpen ? <Input.TextArea readOnly value={uip.notes} /> : null}
+        </div>
+    )
+}
 
 const FindPlace = ({}: FindPlaceProps) => {
     const { data: currentUser } = useCurrentUserDetails()
@@ -105,6 +171,8 @@ const FindPlace = ({}: FindPlaceProps) => {
             )
             .reverse()
     }, [matchingUserPlaceInfos, _matchingPlaces, sortMode])
+
+    const [allNotesOpen, setAllNotesOpen] = useState(false)
     return (
         <div style={{ width: '100%', height: '100%', padding: '15px' }}>
             <Typography.Title level={3}>Find Me A Place!</Typography.Title>
@@ -145,9 +213,17 @@ const FindPlace = ({}: FindPlaceProps) => {
                     </Radio>
                 </Radio.Group>
             </div>
+
             {(matchingPlaces ?? []).length > 0 ? (
                 <>
                     <Typography.Title level={4}>Results:</Typography.Title>
+                    <Button
+                        onClick={() => {
+                            setAllNotesOpen(!allNotesOpen)
+                        }}
+                    >
+                        {allNotesOpen ? 'Hide' : 'Show'} All Notes
+                    </Button>
                     <LocationWrap>
                         {(matchingPlaces ?? []).map(place => (
                             <CardWrap
@@ -166,36 +242,12 @@ const FindPlace = ({}: FindPlaceProps) => {
                                             (u1?.email ?? '').localeCompare(u2?.email ?? ''),
                                         )
                                         .map(uip => (
-                                            <div
-                                                key={uip.email}
-                                                style={{
-                                                    display: 'flex',
-                                                    flexDirection: 'row',
-                                                    gap: '5px',
-                                                    alignItems: 'center',
-                                                }}
-                                            >
-                                                <div
-                                                    style={{
-                                                        display: 'flex',
-                                                        flexDirection: 'row',
-                                                        gap: '1px',
-                                                    }}
-                                                >
-                                                    {[1, 2, 3, 4, 5].map(rating => {
-                                                        const score =
-                                                            sortMode === 'desire'
-                                                                ? uip.desire
-                                                                : uip.rating
-                                                        if (score === null || rating > score) {
-                                                            return <StarOutlined key={rating} />
-                                                        } else {
-                                                            return <StarFilled key={rating} />
-                                                        }
-                                                    })}
-                                                </div>
-                                                {uip.name || uip.email || 'Unknown User'}{' '}
-                                            </div>
+                                            <UserRatingRow
+                                                uip={uip}
+                                                sortMode={sortMode}
+                                                key={uip.id}
+                                                forceNoteOpen={allNotesOpen}
+                                            />
                                         ))}
                                     <div
                                         style={{
