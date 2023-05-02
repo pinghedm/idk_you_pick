@@ -162,7 +162,9 @@ const FindPlace = ({}: FindPlaceProps) => {
                                     style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}
                                 >
                                     {place.userPlaceInfos
-                                        .sort((u1, u2) => u1.email.localeCompare(u2.email))
+                                        .sort((u1, u2) =>
+                                            (u1?.email ?? '').localeCompare(u2?.email ?? ''),
+                                        )
                                         .map(uip => (
                                             <div
                                                 key={uip.email}
@@ -173,7 +175,6 @@ const FindPlace = ({}: FindPlaceProps) => {
                                                     alignItems: 'center',
                                                 }}
                                             >
-                                                {uip.name || uip.email}{' '}
                                                 <div
                                                     style={{
                                                         display: 'flex',
@@ -193,6 +194,7 @@ const FindPlace = ({}: FindPlaceProps) => {
                                                         }
                                                     })}
                                                 </div>
+                                                {uip.name || uip.email || 'Unknown User'}{' '}
                                             </div>
                                         ))}
                                     <div
