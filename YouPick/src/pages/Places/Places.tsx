@@ -4,7 +4,7 @@ import {
     useAutocompleteSuggestions,
     usePlaceDetails,
 } from 'services/map_service'
-import { Card, Button, Switch, AutoComplete, Input, Typography, Tooltip } from 'antd'
+import { Card, Button, Switch, AutoComplete, Input, Typography, Tooltip, Checkbox } from 'antd'
 import {
     ExportOutlined,
     StarFilled,
@@ -305,7 +305,7 @@ const PlaceSearchWrap = styled.div`
     background-color: white;
     @media screen and (min-width: ${MOBILE_BREAKPOINT}) {
         width: 49%;
-        height: 500px;
+        max-height: 500px;
     }
 `
 
@@ -365,11 +365,57 @@ const Places = ({}: PlacesProps) => {
     const [autoCompleteDropDownIsOpen, setautoCompleteDropDownIsOpen] = useState(false)
     const createPlaceMutation = useCreatePlace()
     const [manualPlace, setManualPlace] = useState<Partial<Place>>({})
+    const [placeFilters, setPlaceFilters] = useState<{
+        hideRated: boolean
+        hideDesired: boolean
+        hideHardNo: boolean
+    }>({ hideRated: false, hideDesired: false, hideHardNo: true })
+
+    const filteredPlaces = useMemo(
+        () =>
+            places.filter(p => {
+                const userPlaceInfo = userPlaceInfoByPlaceId?.[p.place_id]
+                const passHardNo = !((userPlaceInfo?.hard_no ?? false) && placeFilters.hideHardNo)
+                const passRated = !(placeFilters.hideRated && userPlaceInfo?.rating)
+                const passDesired = !(placeFilters.hideDesired && userPlaceInfo?.desire)
+                return passHardNo && passRated && passDesired
+            }),
+        [places, placeFilters, userPlaceInfoByPlaceId],
+    )
 
     return (
         <PlaceWrap>
             <PlaceSearchWrap>
                 <style>{`.ensureHeight{max-height: 175px;}`}</style>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', flexDirection: 'row', gap: '5px' }}>
+                        <Checkbox
+                            checked={placeFilters.hideRated}
+                            onChange={e => {
+                                setPlaceFilters(pf => ({ ...pf, hideRated: e.target.checked }))
+                            }}
+                        />
+                        Hide Places I Have Been
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'row', gap: '5px' }}>
+                        <Checkbox
+                            checked={placeFilters.hideDesired}
+                            onChange={e => {
+                                setPlaceFilters(pf => ({ ...pf, hideDesired: e.target.checked }))
+                            }}
+                        />{' '}
+                        Hide Places I Want To Go
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'row', gap: '5px' }}>
+                        <Checkbox
+                            checked={placeFilters.hideHardNo}
+                            onChange={e => {
+                                setPlaceFilters(pf => ({ ...pf, hideHardNo: e.target.checked }))
+                            }}
+                        />{' '}
+                        Hide My Hard Nos
+                    </div>
+                </div>
 
                 <AutoComplete
                     popupClassName={'ensureHeight'}
@@ -483,7 +529,12 @@ const Places = ({}: PlacesProps) => {
                 ) : null}
             </PlaceSearchWrap>
             <PlaceListWrap>
-                {places.map((p, idx) => (
+                {places.length !== filteredPlaces.length ? (
+                    <Typography.Text type="secondary">
+                        {places.length - filteredPlaces.length} Results Filtered Out
+                    </Typography.Text>
+                ) : null}
+                {filteredPlaces.map((p, idx) => (
                     <PlaceCard
                         key={p.place_id}
                         place={p}
