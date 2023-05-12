@@ -223,6 +223,7 @@ const PlaceCard = ({
                     ))}
                 </div>
                 <AutoComplete
+                    filterOption
                     style={{ width: '200px' }}
                     placeholder="New Tag"
                     allowClear
@@ -234,7 +235,7 @@ const PlaceCard = ({
                     onSelect={val => {
                         setNewTag('')
                         if (!newPlaceInfo?.tags?.includes(val)) {
-                            const newTags = [...(userPlaceInfo?.tags ?? []), val]
+                            const newTags = [...(newPlaceInfo?.tags ?? []), val]
                             setNewPlaceInfo(pi => ({ ...pi, tags: newTags }))
 
                             if (!showSave) {
@@ -249,7 +250,7 @@ const PlaceCard = ({
                     onKeyUp={e => {
                         if (e.key === 'Enter') {
                             if (!newPlaceInfo?.tags?.includes(newTag)) {
-                                const newTags = [...(userPlaceInfo?.tags ?? []), newTag]
+                                const newTags = [...(newPlaceInfo?.tags ?? []), newTag]
                                 setNewPlaceInfo(pi => ({
                                     ...pi,
                                     tags: newTags,
