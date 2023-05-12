@@ -22,7 +22,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig)
 const auth = getAuth()
 const emulatorAuthDomain = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || ''
-if (emulatorAuthDomain.includes('localhost')) {
+if (emulatorAuthDomain.includes('localhost') || emulatorAuthDomain.includes('192.168')) {
     connectAuthEmulator(auth, emulatorAuthDomain)
 }
 export const db = getFirestore(app)

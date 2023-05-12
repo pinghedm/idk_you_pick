@@ -504,7 +504,7 @@ const Places = ({}: PlacesProps) => {
     return (
         <PlaceWrap>
             <PlaceSearchWrap>
-                <style>{`.ensureHeight{max-height: 175px;}`}</style>
+                <style>{`.ensureHeight {max-height: 175px;}`}</style>
                 <div style={{ display: 'flex', flexDirection: 'row', gap: '5px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
                         <div style={{ display: 'flex', flexDirection: 'row', gap: '5px' }}>
@@ -514,7 +514,7 @@ const Places = ({}: PlacesProps) => {
                                     setPlaceFilters(pf => ({ ...pf, hideRated: e.target.checked }))
                                 }}
                             />
-                            Hide Places I Have Been
+                            <div style={{ color: 'black' }}>Hide Places I Have Been</div>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'row', gap: '5px' }}>
                             <Checkbox
@@ -525,8 +525,8 @@ const Places = ({}: PlacesProps) => {
                                         hideDesired: e.target.checked,
                                     }))
                                 }}
-                            />{' '}
-                            Hide Places I Want To Go
+                            />
+                            <div style={{ color: 'black' }}>Hide Places I Want To Go</div>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'row', gap: '5px' }}>
                             <Checkbox
@@ -534,8 +534,8 @@ const Places = ({}: PlacesProps) => {
                                 onChange={e => {
                                     setPlaceFilters(pf => ({ ...pf, hideHardNo: e.target.checked }))
                                 }}
-                            />{' '}
-                            Hide My Hard Nos
+                            />
+                            <div style={{ color: 'black' }}>Hide My Hard Nos</div>
                         </div>
                         <div
                             style={{
