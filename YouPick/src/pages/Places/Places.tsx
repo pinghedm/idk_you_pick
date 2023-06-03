@@ -36,6 +36,7 @@ import useDebounce from 'hooks/useDebounce'
 import styled, { css } from 'styled-components'
 import { v4 as uuidv4 } from 'uuid'
 import { useUsers, User } from 'services/user_service'
+import { shootConfetti } from 'services/utils'
 
 export interface PlacesProps {}
 
@@ -298,6 +299,7 @@ const PlaceCard = ({
                                         {
                                             onSettled: () => {
                                                 ;(clearSearch ?? (() => {}))()
+                                                shootConfetti()
                                             },
                                         },
                                     )
