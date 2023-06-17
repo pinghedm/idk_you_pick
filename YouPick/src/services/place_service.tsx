@@ -45,11 +45,11 @@ export const usePlaces = () => {
 export const useMatchingPlaces = (placeIds: string[]) => {
     const _get = async (placeIds: string[]) => {
         const ref = collection(db, 'places')
-        const q = firebaseQuery(ref, where('place_id', 'in', placeIds))
+        const q = firebaseQuery(ref)
         const places: Place[] = []
         const queryResult = await getDocs(q)
         queryResult.forEach(d => places.push(d.data() as Place))
-        return places
+        return places.filter(p => placeIds.includes(p.place_id))
     }
     const query = useQuery(['places', placeIds.sort()], () => _get(placeIds), {
         enabled: placeIds.length > 0,
